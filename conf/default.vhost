@@ -1,0 +1,38 @@
+server {
+        server_name www.SITE SITE;
+        listen IP:PUERTO;
+        rewrite     ^  https://$server_name$request_uri? permanent;
+        #return 301 https://$host$request_uri;
+}
+server {
+
+        listen IP:443 http2 ssl;
+        server_name www.SITE SITE;
+        ssl_certificate /etc/letsencrypt/live/SITE/fullchain.pem;
+        ssl_certificate_key /etc/letsencrypt/live/SITE/privkey.pem;
+
+        root /home/SITE/public_html;
+        index index.php index.html index.htm;
+
+        access_log /var/log/nginx/SITE_access_log;
+        error_log /var/log/nginx/SITE_error_log;
+
+        try_files $uri $uri/ /index.php?q=$uri&$args;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+        include fastcgi_params;
+
+        location ~ \.php$ {
+                try_files $uri $uri/ /index.php?q=$uri&$args;
+                fastcgi_pass unix:/run/php/php7.0-fpm.sock;
+                #fastcgi_pass unix:/run/php/php5.6-fpm.sock;
+                #fastcgi_pass 127.0.0.1:9000;
+		fastcgi_read_timeout 180;
+        }
+
+        location ~* \.(js|css|ico|gif|jpeg|jpg|png|woff|ttf|otf|svg|woff2|eot)$ {
+                expires 30d;
+                add_header Pragma public;
+                add_header Cache-Control "public";
+        }
+
+}

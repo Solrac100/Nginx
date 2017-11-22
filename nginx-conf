@@ -1,0 +1,19 @@
+#! /bin/bash
+
+path1=$PWD
+if [ -d /usr/local/nginx/  ];then
+	cp -a /usr/local/nginx /etc/
+	rm -rf /etc/nginx/sbin
+	rm -rf /etc/nginx/logs
+	cd /etc/nginx/conf/
+	mkdir default
+	mv *.default default/
+	cp -a * ..
+	cd ..
+	rm -rf conf
+	mkdir sites-enable
+	mkdir sites-available
+	cd $path1
+	cp -a conf/* /etc/nginx/sites-available/	
+	export PATH=$PATH:/usr/local/nginx/sbin/
+fi

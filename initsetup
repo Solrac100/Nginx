@@ -1,0 +1,53 @@
+#! /bin/bash
+#comentario
+if [ $(whoami) = "root"  ];then
+        # Flags
+        echo "Instalacion Basica:"
+        while getopts ":p:na" opt; do
+                case $opt in
+                        p) vphp=$OPTARG
+                        echo "PHP: $vphp" >&2
+                        ;;
+                        n) nginx=1
+                        echo "Nginx" >&2
+                        ;;
+                        a) apache=1
+                        echo "Apache" >&2
+                        ;;
+			m) mysql=1
+			echo "Mysql" >&2
+			;;
+                        \?)
+                        echo "Invalid option: -$OPTARG" >&2
+                        exit 1
+                        ;;
+                        :)
+                        echo "Option -$OPTARG requires an argument." >&2
+                        exit 1
+                        ;;
+                esac
+        done
+
+        #funciones
+        if [ $nginx = 1  ];then
+                apt-get install nginx -yqq
+        fi
+	if [ $apache = 1 ];then
+                apt-get install apache2 -yqq
+		echo "ServerName 127.0.0.1" >> /etc/apache2/apache2.conf
+        fi
+	if [ $apache = 1 ];then
+                apt-get install mysql-server -yqq
+        fi
+        if [[ $vphp = "5.6" || $vphp = "7.0" || $vphp = "7.1" ]];then
+		apt-get install software-properties-common -yqq
+        	add-apt-repository ppa:ondrej/php 
+        	apt-get update -yqq
+        	apt-get install -yqq --allow-unauthenticated php$vphp-mbstring php$vphp-mcrypt php$vphp-mysql php$vphp-xml php$vphp-gd php$vphp-dom php$vphp-cli php$vphp-json php$vphp-common php$vphp-opcache php$vphp-readline php$vphp-fpm
+        else
+                echo "version de php no valida"
+        fi
+else
+        echo "Se requiere privilegios de superusuario"
+fi
+

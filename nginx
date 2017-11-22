@@ -1,0 +1,65 @@
+#! /bin/bash
+apt-get update
+apt-get install build-essential zlib1g-dev libpcre3 libpcre3-dev uuid-dev wget openssl openssl libssl-dev libperl-dev libxslt-dev libgd2-xpm-dev libgeoip-dev -y --force-yes  #&>/dev/null
+echo "Librerias Listo" 
+
+#current versions
+nginx=nginx-1.12.2
+pagespeed=latest-stable
+naxsi=0.53-2
+
+#flag
+naxsimodule=""
+ppmodule=""
+
+mkdir compile 
+cd compile
+
+while getopts ":pn" opt; do
+                case $opt in
+                        n) 
+                        echo "Naxsi: $naxsi" >&2
+			naxsimodule="--add-module=../naxsi-0.53-2/naxsi_src"
+			wget https://github.com/nbs-system/naxsi/archive/$naxsi.tar.gz --no-check-certificate &>/dev/null
+			tar -zxvf $naxsi.tar.gz && rm -rf $naxsi.tar.gz &>/dev/null
+			echo "Naxsi Listo"
+			;;
+                        p) 
+                        echo "Pagespeed: $pagespeed" >&2
+                        ppmodule="--add-module=../ngx_pagespeed-$pagespeed"
+			wget https://github.com/pagespeed/ngx_pagespeed/archive/$pagespeed.tar.gz --no-check-certificate &>/dev/null
+			tar -zxvf $pagespeed.tar.gz && rm -rf $pagespeed.tar.gz &>/dev/null
+			cd ngx_pagespeed-$pagespeed
+			cd compile/ngx_pagespeed-$pagespeed
+			[ -e scripts/format_binary_url.sh ] && psol_url=$(scripts/format_binary_url.sh PSOL_BINARY_URL)
+			wget ${psol_url} --no-check-certificate
+			tar -xzvf $(basename ${psol_url}) && rm -rf $(basename ${psol_url}) &>/dev/null
+			cd ..
+			echo "Pagespeed Listo"
+			;;
+                        \?)
+                        echo "Invalid option: -$OPTARG" >&2
+                        exit 1
+                        ;;
+                        :)
+                        echo "Option -$OPTARG requires an argument." >&2
+                        exit 1
+                        ;;
+                esac
+done
+
+
+wget https://nginx.org/download/$nginx.tar.gz --no-check-certificate &>/dev/null
+tar -zxvf $nginx.tar.gz && rm -rf $nginx.tar.gz &>/dev/null
+cd $nginx
+echo "Nginx Listo"
+echo "Compilando"
+./configure $naxsimodule $ppmodule --with-cc-opt='-g -O2 -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2' --with-ld-opt='-Wl,-Bsymbolic-functions -Wl,-z,relro' --http-log-path=/var/log/nginx/access.log --error-log-path=/var/log/nginx/error.log --with-debug --with-pcre-jit --with-http_ssl_module --with-http_stub_status_module --with-http_realip_module --with-http_addition_module --with-http_dav_module --with-http_geoip_module --with-http_gzip_static_module --with-http_image_filter_module --with-http_sub_module --with-http_xslt_module --with-mail --with-mail_ssl_module #&>/dev/null 
+
+make &>/dev/null
+make install &>/dev/null
+cd ../..
+rm -rf compile
+
+echo "Configurando Etc"
+. nginx-conf

@@ -1,0 +1,17 @@
+server {
+        server_name www.SITE SITE;
+        listen 80;
+
+	listen 443 ssl;
+        
+	access_log /var/log/nginx/SITE_access_log;
+        error_log /var/log/nginx/SITE_error_log;
+	
+        ssl_certificate /etc/nginx/ssl/nginx.crt;
+        ssl_certificate_key /etc/nginx/ssl/nginx.key;	
+	
+	root /DROOT/public;	
+	passenger_enabled on;
+        passenger_sticky_sessions on;
+
+}
